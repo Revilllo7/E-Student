@@ -1,0 +1,33 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    command: start-dev
+    environment:
+      KC_DB: dev-mem
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import
+    # opcjonalnie: auto-import realm
+    # command: start-dev --import-realm
+
+  backend:
+    build: ./backend
+    depends_on:
+      - keycloak
+    ports:
+      - "8000:8000"
+    environment:
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=edziennik
+      - KEYCLOAK_CLIENT_ID=frontend
+      - KEYCLOAK_CLIENT_SECRET=secret
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
